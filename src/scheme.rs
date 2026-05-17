@@ -144,13 +144,18 @@ impl SchemeData {
     }
 
     /// 内置方案：小鹤双拼
+    ///
+    /// 键位图参考：
+    /// Q-q-iu  W-w-ei  E-e     R-r-uan/van  T-t-ve/ue  Y-y-vn/un  U-sh-u  I-ch-i  O-o/uo  P-p-ie
+    /// A-a     S-s-ong/iong  D-d-ai  F-f-en  G-g-eng  H-h-ang  J-j-an  K-k-uai/ing  L-l-iang/uang
+    /// Z-z-ou  X-x-ia/ua  C-c-ao  V-zh-ui/v  B-b-in  N-n-iao  M-m-ian
     pub fn xiaohe() -> Self {
         SchemeData::new()
             // 特殊声母
             .add_initial('v', "zh")
             .add_initial('i', "ch")
             .add_initial('u', "sh")
-            // 韵母
+            // 韵母（按图片键位）
             .add_final('a', "a")
             .add_final('o', "o")
             .add_final('e', "e")
@@ -159,29 +164,58 @@ impl SchemeData {
             .add_final('v', "ui")
             .add_final('b', "in")
             .add_final('c', "ao")
+            .add_final('d', "ai")
             .add_final('f', "en")
             .add_final('g', "eng")
             .add_final('h', "ang")
             .add_final('j', "an")
             .add_final('k', "ing")
-            .add_final('l', "ai")
+            .add_final('l', "ai") // l 键主韵母为 ai，但 iang/uang 为条件韵母
             .add_final('m', "ian")
             .add_final('n', "iao")
             .add_final('p', "ie")
             .add_final('q', "iu")
             .add_final('r', "uan")
-            .add_final('t', "ue")
+            .add_final('t', "ve")
             .add_final('w', "ei")
             .add_final('x', "ia")
             .add_final('y', "un")
             .add_final('z', "ou")
-            // 条件韵母
-            .add_conditional_final("jqx", 'd', "iang")
-            .add_conditional_final("y", 'd', "iang")
-            .add_conditional_final("", 'd', "uang")
+            // 条件韵母（共享键位）
+            // l: iang(零声母/j/q/x/y) / uang(其他)
+            .add_conditional_final("jqx", 'l', "iang")
+            .add_conditional_final("y", 'l', "iang")
+            .add_conditional_final("", 'l', "uang")
+            // s: ong(零声母/s/sh) / iong(其他)
             .add_conditional_final("jqx", 's', "iong")
             .add_conditional_final("y", 's', "iong")
             .add_conditional_final("", 's', "ong")
+            // k: uai(零声母/g/k/h) / ing(其他)
+            .add_conditional_final("gkh", 'k', "uai")
+            .add_conditional_final("", 'k', "ing")
+            // x: ua(零声母/g/k/h/zh/ch/sh/r) / ia(其他)
+            .add_conditional_final("gkh", 'x', "ua")
+            .add_conditional_final("zr", 'x', "ua")
+            .add_conditional_final("icsu", 'x', "ua")
+            .add_conditional_final("", 'x', "ia")
+            // r: van(零声母/j/q/x/y) / uan(其他)
+            .add_conditional_final("jqx", 'r', "van")
+            .add_conditional_final("y", 'r', "van")
+            .add_conditional_final("", 'r', "uan")
+            // t: ue(零声母/j/q/x/y/n/l) / ve(其他)
+            .add_conditional_final("jqx", 't', "ue")
+            .add_conditional_final("y", 't', "ue")
+            .add_conditional_final("nl", 't', "ue")
+            .add_conditional_final("", 't', "ve")
+            // y: vn(零声母/j/q/x/y) / un(其他)
+            .add_conditional_final("jqx", 'y', "vn")
+            .add_conditional_final("y", 'y', "vn")
+            .add_conditional_final("", 'y', "un")
+            // v: u(j/q/x/y) / ü(n/l) / ui(其他)
+            .add_conditional_final("jqx", 'v', "u")
+            .add_conditional_final("y", 'v', "u")
+            .add_conditional_final("nl", 'v', "v")
+            .add_conditional_final("", 'v', "ui")
     }
 
     /// 内置方案：微软双拼

@@ -139,31 +139,31 @@ let data = SchemeData::from_str(config).unwrap();
 |  a   |  —   |     a     |
 |  b   |  b   |    in     |
 |  c   |  c   |    ao     |
-|  d   |  d   | iang/uang |
+|  d   |  d   |    ai     |
 |  e   |  —   |     e     |
 |  f   |  f   |    en     |
 |  g   |  g   |    eng    |
 |  h   |  h   |    ang    |
 |  i   |  ch  |     i     |
 |  j   |  j   |    an     |
-|  k   |  k   |    ing    |
-|  l   |  l   |    ai     |
+|  k   |  k   |  uai/ing  |
+|  l   |  l   | iang/uang |
 |  m   |  m   |    ian    |
 |  n   |  n   |    iao    |
-|  o   |  —   |     o     |
+|  o   |  —   |   o/uo    |
 |  p   |  p   |    ie     |
 |  q   |  q   |    iu     |
-|  r   |  r   |    uan    |
+|  r   |  r   |  uan/van  |
 |  s   |  s   | ong/iong  |
-|  t   |  t   |    ue     |
+|  t   |  t   |   ve/ue   |
 |  u   |  sh  |     u     |
-|  v   |  zh  |    ui     |
+|  v   |  zh  |   ui/v    |
 |  w   |  w   |    ei     |
-|  x   |  x   |    ia     |
-|  y   |  y   |    un     |
+|  x   |  x   |   ia/ua   |
+|  y   |  y   |   un/vn   |
 |  z   |  z   |    ou     |
 
-> 注：`iang/uang` 和 `ong/iong` 为条件韵母，根据声母自动选择。
+> 注：斜杠表示条件韵母，根据声母自动选择。例如 `l` 键在 `j/q/x/y` 声母后为 `iang`，其他声母后为 `uang`。
 
 ## 项目结构
 

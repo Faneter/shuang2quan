@@ -18,20 +18,26 @@ impl ShuangPinConverter {
 
     /// 根据声母和键位获取韵母（处理条件韵母）
     fn get_final(&self, initial: &str, key: char) -> Option<String> {
-        // 先检查条件韵母映射（非默认的优先）
+        let mut has_conditional = false;
+        let mut default_conditional: Option<String> = None;
+
+        // 遍历条件韵母映射
         for (prefixes, k, fin) in &self.data.conditional_finals {
-            if *k == key && !prefixes.is_empty() {
-                if prefixes.chars().any(|p| initial.starts_with(p)) {
+            if *k == key {
+                has_conditional = true;
+                if prefixes.is_empty() {
+                    // 记录默认映射
+                    default_conditional = Some(fin.clone());
+                } else if prefixes.chars().any(|p| initial.starts_with(p)) {
+                    // 匹配到特定前缀
                     return Some(fin.clone());
                 }
             }
         }
 
-        // 再检查条件韵母的默认映射
-        for (prefixes, k, fin) in &self.data.conditional_finals {
-            if *k == key && prefixes.is_empty() {
-                return Some(fin.clone());
-            }
+        // 如果有条件韵母配置，优先返回默认条件映射
+        if has_conditional {
+            return default_conditional;
         }
 
         // 最后检查普通韵母映射
@@ -74,13 +80,10 @@ impl ShuangPinConverter {
             };
 
             // 获取韵母（处理条件韵母）
-            let final_str = if let Some(s) = self.get_final(&initial, final_char) {
-                s
-            } else if let Some(s) = self.data.finals.get(&final_char) {
-                s.clone()
-            } else {
-                final_char.to_string()
-            };
+            let final_str = self
+                .get_final(&initial, final_char)
+                .or_else(|| self.data.finals.get(&final_char).cloned())
+                .unwrap_or_else(|| final_char.to_string());
 
             return Some(initial + &final_str);
         }

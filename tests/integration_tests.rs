@@ -4,13 +4,15 @@ use shuang2quan::scheme::SchemeData;
 #[test]
 fn test_xiaohe_shuang() {
     let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
-    assert_eq!(converter.convert_syllable("ud"), Some("shuang".to_string()));
+    // 小鹤双拼: sh->u, uang->l
+    assert_eq!(converter.convert_syllable("ul"), Some("shuang".to_string()));
 }
 
 #[test]
 fn test_xiaohe_jiang() {
     let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
-    assert_eq!(converter.convert_syllable("jd"), Some("jiang".to_string()));
+    // 小鹤双拼: j->j, iang->l
+    assert_eq!(converter.convert_syllable("jl"), Some("jiang".to_string()));
 }
 
 #[test]
@@ -34,7 +36,7 @@ fn test_xiaohe_pin() {
 #[test]
 fn test_xiaohe_full() {
     let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
-    assert_eq!(converter.convert("ud pb"), "shuang pin");
+    assert_eq!(converter.convert("ul pb"), "shuang pin");
 }
 
 #[test]
