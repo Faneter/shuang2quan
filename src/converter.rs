@@ -1,41 +1,41 @@
-use crate::scheme::{get_scheme_data, SchemeData, ShuangPinScheme};
+use crate::scheme::SchemeData;
 
 /// 双拼转换器
 pub struct ShuangPinConverter {
-    _scheme: ShuangPinScheme,
     data: SchemeData,
 }
 
 impl ShuangPinConverter {
-    /// 创建新的转换器
-    pub fn new(scheme: ShuangPinScheme) -> Self {
-        let data = get_scheme_data(scheme);
-        ShuangPinConverter {
-            _scheme: scheme,
-            data,
-        }
+    /// 创建新的转换器，使用自定义方案数据
+    pub fn new(data: SchemeData) -> Self {
+        ShuangPinConverter { data }
+    }
+
+    /// 根据名称创建转换器（使用内置方案）
+    pub fn from_name(name: &str) -> Option<Self> {
+        SchemeData::from_name(name).map(Self::new)
     }
 
     /// 根据声母和键位获取韵母（处理条件韵母）
-    fn get_final(&self, initial: &str, key: char) -> Option<&'static str> {
+    fn get_final(&self, initial: &str, key: char) -> Option<String> {
         // 先检查条件韵母映射（非默认的优先）
-        for &(prefixes, k, fin) in &self.data.conditional_finals {
-            if k == key && !prefixes.is_empty() {
+        for (prefixes, k, fin) in &self.data.conditional_finals {
+            if *k == key && !prefixes.is_empty() {
                 if prefixes.chars().any(|p| initial.starts_with(p)) {
-                    return Some(fin);
+                    return Some(fin.clone());
                 }
             }
         }
 
         // 再检查条件韵母的默认映射
-        for &(prefixes, k, fin) in &self.data.conditional_finals {
-            if k == key && prefixes.is_empty() {
-                return Some(fin);
+        for (prefixes, k, fin) in &self.data.conditional_finals {
+            if *k == key && prefixes.is_empty() {
+                return Some(fin.clone());
             }
         }
 
         // 最后检查普通韵母映射
-        self.data.finals.get(&key).copied()
+        self.data.finals.get(&key).cloned()
     }
 
     /// 转换单个双拼编码为全拼
@@ -51,7 +51,7 @@ impl ShuangPinConverter {
             let c = chars[0];
             // 如果是韵母映射中的字符，直接返回对应的韵母
             if let Some(final_str) = self.data.finals.get(&c) {
-                return Some(final_str.to_string());
+                return Some(final_str.clone());
             }
             // 如果是 a, o, e 等单韵母，直接返回
             if "aoe".contains(c) {
@@ -67,7 +67,7 @@ impl ShuangPinConverter {
 
             // 获取声母
             let initial = if let Some(s) = self.data.initials.get(&initial_char) {
-                s.to_string()
+                s.clone()
             } else {
                 // 如果不是特殊声母，尝试直接使用该字符作为声母
                 initial_char.to_string()
@@ -75,9 +75,9 @@ impl ShuangPinConverter {
 
             // 获取韵母（处理条件韵母）
             let final_str = if let Some(s) = self.get_final(&initial, final_char) {
-                s.to_string()
+                s
             } else if let Some(s) = self.data.finals.get(&final_char) {
-                s.to_string()
+                s.clone()
             } else {
                 final_char.to_string()
             };

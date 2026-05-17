@@ -1,0 +1,39 @@
+# 自定义双拼方案示例
+# 声母映射
+initial:v=zh
+initial:i=ch
+initial:u=sh
+
+# 韵母映射
+final:a=a
+final:o=o
+final:e=e
+final:i=i
+final:u=u
+final:v=ui
+final:b=in
+final:c=ao
+final:f=en
+final:g=eng
+final:h=ang
+final:j=an
+final:k=ing
+final:l=ai
+final:m=ian
+final:n=iao
+final:p=ie
+final:q=iu
+final:r=uan
+final:t=ue
+final:w=ei
+final:x=ia
+final:y=un
+final:z=ou
+
+# 条件韵母映射
+conditional:jqx,d=iang
+conditional:y,d=iang
+conditional:,d=uang
+conditional:jqx,s=iong
+conditional:y,s=iong
+conditional:,s=ong

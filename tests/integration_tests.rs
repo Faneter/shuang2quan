@@ -1,94 +1,125 @@
 use shuang2quan::converter::ShuangPinConverter;
-use shuang2quan::scheme::ShuangPinScheme;
+use shuang2quan::scheme::SchemeData;
 
 #[test]
 fn test_xiaohe_shuang() {
-    let converter = ShuangPinConverter::new(ShuangPinScheme::XiaoHe);
-    // 小鹤双拼: sh->u, uang->d (sh 声母匹配 uang)
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
     assert_eq!(converter.convert_syllable("ud"), Some("shuang".to_string()));
 }
 
 #[test]
 fn test_xiaohe_jiang() {
-    let converter = ShuangPinConverter::new(ShuangPinScheme::XiaoHe);
-    // 小鹤双拼: j->j, iang->d (j 声母匹配 iang)
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
     assert_eq!(converter.convert_syllable("jd"), Some("jiang".to_string()));
 }
 
 #[test]
 fn test_xiaohe_qiong() {
-    let converter = ShuangPinConverter::new(ShuangPinScheme::XiaoHe);
-    // 小鹤双拼: q->q, iong->s (q 声母匹配 iong)
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
     assert_eq!(converter.convert_syllable("qs"), Some("qiong".to_string()));
 }
 
 #[test]
 fn test_xiaohe_song() {
-    let converter = ShuangPinConverter::new(ShuangPinScheme::XiaoHe);
-    // 小鹤双拼: s->s, ong->s (s 声母匹配 ong)
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
     assert_eq!(converter.convert_syllable("ss"), Some("song".to_string()));
 }
 
 #[test]
 fn test_xiaohe_pin() {
-    let converter = ShuangPinConverter::new(ShuangPinScheme::XiaoHe);
-    // 小鹤双拼: p->p, in->b, 所以 "pin" = "pb"
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
     assert_eq!(converter.convert_syllable("pb"), Some("pin".to_string()));
 }
 
 #[test]
 fn test_xiaohe_full() {
-    let converter = ShuangPinConverter::new(ShuangPinScheme::XiaoHe);
-    // "ud pb" -> "shuang pin"
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
     assert_eq!(converter.convert("ud pb"), "shuang pin");
 }
 
 #[test]
 fn test_microsoft_shuang() {
-    let converter = ShuangPinConverter::new(ShuangPinScheme::Microsoft);
-    // 微软双拼: sh->e, uang->d, 所以 "shuang" = "ed"
+    let converter = ShuangPinConverter::from_name("microsoft").unwrap();
     assert_eq!(converter.convert_syllable("ed"), Some("shuang".to_string()));
 }
 
 #[test]
 fn test_microsoft_jiang() {
-    let converter = ShuangPinConverter::new(ShuangPinScheme::Microsoft);
-    // 微软双拼: j->j, iang->d
+    let converter = ShuangPinConverter::from_name("microsoft").unwrap();
     assert_eq!(converter.convert_syllable("jd"), Some("jiang".to_string()));
 }
 
 #[test]
 fn test_microsoft_pin() {
-    let converter = ShuangPinConverter::new(ShuangPinScheme::Microsoft);
-    // 微软双拼: p->p, in->b, 所以 "pin" = "pb"
+    let converter = ShuangPinConverter::from_name("microsoft").unwrap();
     assert_eq!(converter.convert_syllable("pb"), Some("pin".to_string()));
 }
 
 #[test]
 fn test_scheme_from_name() {
-    assert_eq!(
-        ShuangPinScheme::from_name("xiaohe"),
-        Some(ShuangPinScheme::XiaoHe)
-    );
-    assert_eq!(
-        ShuangPinScheme::from_name("microsoft"),
-        Some(ShuangPinScheme::Microsoft)
-    );
-    assert_eq!(
-        ShuangPinScheme::from_name("sougou"),
-        Some(ShuangPinScheme::SouGou)
-    );
-    assert_eq!(ShuangPinScheme::from_name("unknown"), None);
+    assert!(ShuangPinConverter::from_name("xiaohe").is_some());
+    assert!(ShuangPinConverter::from_name("microsoft").is_some());
+    assert!(ShuangPinConverter::from_name("sougou").is_some());
+    assert!(ShuangPinConverter::from_name("unknown").is_none());
 }
 
 #[test]
 fn test_empty_input() {
-    let converter = ShuangPinConverter::new(ShuangPinScheme::XiaoHe);
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
     assert_eq!(converter.convert(""), "");
 }
 
 #[test]
 fn test_single_char() {
-    let converter = ShuangPinConverter::new(ShuangPinScheme::XiaoHe);
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
     assert_eq!(converter.convert_syllable("a"), Some("a".to_string()));
+}
+
+#[test]
+fn test_custom_scheme_from_str() {
+    let config = r#"
+# 自定义双拼方案
+initial:v=zh
+initial:i=ch
+initial:u=sh
+final:a=a
+final:b=in
+final:d=iang
+final:s=ong
+conditional:jqx,d=iang
+conditional:y,d=iang
+conditional:,d=uang
+"#;
+
+    let data = SchemeData::from_str(config).unwrap();
+    let converter = ShuangPinConverter::new(data);
+
+    assert_eq!(converter.convert_syllable("ud"), Some("shuang".to_string()));
+    assert_eq!(converter.convert_syllable("jd"), Some("jiang".to_string()));
+    assert_eq!(converter.convert_syllable("pb"), Some("pin".to_string()));
+}
+
+#[test]
+fn test_custom_scheme_builder() {
+    let data = SchemeData::new()
+        .add_initial('v', "zh")
+        .add_initial('i', "ch")
+        .add_initial('u', "sh")
+        .add_final('a', "a")
+        .add_final('b', "in")
+        .add_final('d', "iang")
+        .add_final('s', "ong")
+        .add_conditional_final("jqx", 'd', "iang")
+        .add_conditional_final("y", 'd', "iang")
+        .add_conditional_final("", 'd', "uang");
+
+    let converter = ShuangPinConverter::new(data);
+    assert_eq!(converter.convert_syllable("ud"), Some("shuang".to_string()));
+    assert_eq!(converter.convert_syllable("jd"), Some("jiang".to_string()));
+}
+
+#[test]
+fn test_invalid_config() {
+    let config = "invalid_line";
+    assert!(SchemeData::from_str(config).is_err());
 }
