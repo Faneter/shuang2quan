@@ -125,3 +125,32 @@ fn test_invalid_config() {
     let config = "invalid_line";
     assert!(SchemeData::from_str(config).is_err());
 }
+
+#[test]
+fn test_mixed_text_with_english() {
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
+    // 英文单词（含大写）应保留原样
+    assert_eq!(
+        converter.convert("veuiyige Windows igxu"),
+        "zhe'shi'yi'ge Windows cheng'xu"
+    );
+}
+
+#[test]
+fn test_mixed_text_with_numbers_and_symbols() {
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
+    // 数字和符号应保留原样
+    assert_eq!(
+        converter.convert("ul pb 123 test@email.com"),
+        "shuang pin 123 test@email.com"
+    );
+}
+
+#[test]
+fn test_mixed_text_multiple_languages() {
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
+    assert_eq!(
+        converter.convert("veuiyige Windows Linux macOS Android igxu"),
+        "zhe'shi'yi'ge Windows Linux macOS Android cheng'xu"
+    );
+}
