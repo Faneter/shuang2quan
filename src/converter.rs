@@ -91,129 +91,13 @@ impl ShuangPinConverter {
         None
     }
 
-    /// 检查一个字符是否是有效的双拼键位（声母或韵母键）
-    fn is_valid_key(&self, c: char) -> bool {
-        // 基本声母键
-        if ('a'..='z').contains(&c) {
-            return true;
-        }
-        // 特殊符号键（部分方案使用）
-        matches!(c, ';' | '\'')
-    }
-
-    /// 检查一个字符是否是标点符号
-    fn is_punctuation(&self, c: char) -> bool {
-        matches!(
-            c,
-            ',' | '.'
-                | '!'
-                | '?'
-                | ':'
-                | ';'
-                | '"'
-                | '\''
-                | '('
-                | ')'
-                | '['
-                | ']'
-                | '{'
-                | '}'
-                | '<'
-                | '>'
-                | '/'
-                | '\\'
-                | '|'
-                | '@'
-                | '#'
-                | '$'
-                | '%'
-                | '^'
-                | '&'
-                | '*'
-                | '+'
-                | '='
-                | '~'
-                | '`'
-                | '·'
-                | '，'
-                | '。'
-                | '！'
-                | '？'
-                | '：'
-                | '；'
-                | '「'
-                | '」'
-                | '【'
-                | '】'
-                | '（'
-                | '）'
-                | '《'
-                | '》'
-                | '、'
-                | '—'
-                | '…'
-        )
-    }
-
-    /// 判断一段文本是否"看起来像"双拼编码
-    ///
-    /// 启发式规则：
-    /// 1. 只包含小写字母和少量特殊符号
-    /// 2. 不包含大写字母（英文单词通常有大写）
-    /// 3. 不包含连续的辅音组合（如 "rst", "str", "ndows" 等英文常见组合）
-    fn looks_like_shuangpin(&self, segment: &str) -> bool {
-        if segment.is_empty() {
-            return false;
-        }
-
-        // 如果包含大写字母，一定不是双拼
-        if segment.chars().any(|c| c.is_uppercase()) {
-            return false;
-        }
-
-        // 如果包含非双拼键位的字符（如数字等），不是双拼
-        if !segment.chars().all(|c| self.is_valid_key(c)) {
-            return false;
-        }
-
-        // 启发式：双拼编码中，连续的辅音字母组合应该很少见
-        // 英文单词常见的三辅音组合（如 rst, str, ndw 等）不太会出现在双拼中
-        let consonant_clusters = ["rst", "str", "ndw", "rld", "cks", "tch", "nch"];
-        for cluster in &consonant_clusters {
-            if segment.contains(cluster) {
-                return false;
-            }
-        }
-
-        true
-    }
-
-    /// 检查一个拼音是否"看起来有效"
-    ///
-    /// 用于过滤掉明显不是有效拼音的结果（如 "sve", "rld" 等）
-    fn looks_like_valid_pinyin(&self, pinyin: &str) -> bool {
-        // 常见无效拼音模式
-        let invalid_patterns = ["sve", "rld", "ndw", "fwe", "bve", "pve", "mve"];
-        for pattern in &invalid_patterns {
-            if pinyin.contains(pattern) {
-                return false;
-            }
-        }
-        true
-    }
-
     /// 尝试将一段文本完整解析为双拼
     ///
     /// 如果文本能被完全解析为双拼音节（每两个字符一组），返回全拼结果；
-    /// 否则返回 None，表示这段文本不是双拼编码。
+    /// 否则返回 None。
     fn try_convert_segment(&self, segment: &str) -> Option<String> {
         if segment.is_empty() {
             return Some(String::new());
-        }
-
-        // 首先判断这段文本是否"看起来像"双拼
-        if !self.looks_like_shuangpin(segment) {
-            return None;
         }
 
         let chars: Vec<char> = segment.chars().collect();
@@ -249,32 +133,7 @@ impl ShuangPinConverter {
             return None;
         }
 
-        // 验证解析结果是否都是有效拼音
-        if !self.looks_like_valid_pinyin(&result) {
-            return None;
-        }
-
         Some(result)
-    }
-
-    /// 检查片段是否是邮箱、URL 等特殊格式
-    fn is_special_format(&self, fragment: &str) -> bool {
-        // 邮箱格式
-        if fragment.contains('@') && fragment.contains('.') {
-            return true;
-        }
-        // URL 常见后缀
-        if fragment.contains("://") || fragment.contains("www.") {
-            return true;
-        }
-        // 域名后缀
-        let domain_suffixes = [".com", ".cn", ".org", ".net", ".io", ".dev", ".rs"];
-        for suffix in &domain_suffixes {
-            if fragment.ends_with(suffix) {
-                return true;
-            }
-        }
-        false
     }
 
     /// 处理一个片段，按标点符号分割后分别转换
@@ -283,17 +142,12 @@ impl ShuangPinConverter {
             return String::new();
         }
 
-        // 如果是特殊格式（邮箱、URL 等），直接保留
-        if self.is_special_format(fragment) {
-            return fragment.to_string();
-        }
-
         let mut result = String::new();
         let mut current_word = String::new();
 
         for c in fragment.chars() {
-            if self.is_punctuation(c) {
-                // 遇到标点，先转换当前累积的单词
+            if c.is_ascii_punctuation() && c != '\'' && c != ';' {
+                // 遇到标点（保留双拼可能用到的引号和分号），先转换当前累积的单词
                 if !current_word.is_empty() {
                     if let Some(converted) = self.try_convert_segment(&current_word) {
                         result.push_str(&converted);
@@ -323,18 +177,58 @@ impl ShuangPinConverter {
 
     /// 转换一段双拼文本为全拼
     ///
-    /// 按空格分割文本，对每个片段判断是否为双拼编码：
-    /// - 如果能完整解析为双拼，则转换
-    /// - 否则保留原样
+    /// 支持用 `` ` `` 反引号包裹文本以跳过转换：
+    /// - `` `rust` `` → `rust`（保留原样）
+    /// - `` `hello world` `` → `hello world`（支持空格）
+    ///
+    /// 未被反引号包裹的部分按正常逻辑转换。
     pub fn convert(&self, input: &str) -> String {
-        let segments: Vec<&str> = input.split(' ').collect();
-        let mut result = Vec::new();
+        let mut result = String::new();
+        let mut i = 0;
+        let chars: Vec<char> = input.chars().collect();
 
-        for segment in segments {
-            result.push(self.convert_fragment(segment));
+        while i < chars.len() {
+            // 查找反引号起始
+            if chars[i] == '`' {
+                // 查找配对的结束反引号
+                if let Some(end) = chars[i + 1..].iter().position(|&c| c == '`') {
+                    let end = i + 1 + end;
+                    // 提取反引号之间的内容（去掉反引号本身）
+                    let raw: String = chars[i + 1..end].iter().collect();
+                    if !result.is_empty() && !result.ends_with(' ') {
+                        result.push(' ');
+                    }
+                    result.push_str(&raw);
+                    i = end + 1;
+                    continue;
+                }
+            }
+
+            // 普通文本：收集到下一个反引号或空格
+            let mut segment = String::new();
+            while i < chars.len() && chars[i] != '`' && chars[i] != ' ' {
+                segment.push(chars[i]);
+                i += 1;
+            }
+
+            if !segment.is_empty() {
+                let converted = self.convert_fragment(&segment);
+                if !result.is_empty() && !result.ends_with(' ') {
+                    result.push(' ');
+                }
+                result.push_str(&converted);
+            }
+
+            // 跳过空格（保留一个空格）
+            if i < chars.len() && chars[i] == ' ' {
+                if !result.is_empty() && !result.ends_with(' ') {
+                    result.push(' ');
+                }
+                i += 1;
+            }
         }
 
-        result.join(" ")
+        result
     }
 
     /// 转换并保留原始分隔（空格分隔的音节）

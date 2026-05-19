@@ -127,6 +127,35 @@ fn test_invalid_config() {
 }
 
 #[test]
+fn test_backtick_escape_single_word() {
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
+    // 反引号包裹单个单词
+    assert_eq!(converter.convert("`rust`"), "rust");
+    assert_eq!(converter.convert("`windows`"), "windows");
+}
+
+#[test]
+fn test_backtick_escape_with_spaces() {
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
+    // 反引号包裹带空格的文本
+    assert_eq!(converter.convert("`hello world`"), "hello world");
+    assert_eq!(
+        converter.convert("`hello world` ul pb"),
+        "hello world shuang pin"
+    );
+}
+
+#[test]
+fn test_backtick_escape_mixed() {
+    let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
+    // 反引号与普通双拼混合
+    assert_eq!(
+        converter.convert("veuiyigejiyu `rust` bmxpde,zd `windows` pbtduhyyxkdeigxu"),
+        "zhe'shi'yi'ge'ji'yu rust bian'xie'de,zai windows pin'tai'shang'yun'xing'de'cheng'xu"
+    );
+}
+
+#[test]
 fn test_mixed_text_with_english() {
     let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
     // 英文单词（含大写）应保留原样
@@ -139,9 +168,9 @@ fn test_mixed_text_with_english() {
 #[test]
 fn test_mixed_text_with_numbers_and_symbols() {
     let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
-    // 数字和符号应保留原样
+    // 数字保留原样；邮箱等用反引号包裹
     assert_eq!(
-        converter.convert("ul pb 123 test@email.com"),
+        converter.convert("ul pb 123 `test@email.com`"),
         "shuang pin 123 test@email.com"
     );
 }
@@ -149,8 +178,9 @@ fn test_mixed_text_with_numbers_and_symbols() {
 #[test]
 fn test_mixed_text_multiple_languages() {
     let converter = ShuangPinConverter::from_name("xiaohe").unwrap();
+    // 英文单词用反引号包裹
     assert_eq!(
-        converter.convert("veuiyige Windows Linux macOS Android igxu"),
+        converter.convert("veuiyige `Windows` `Linux` `macOS` `Android` igxu"),
         "zhe'shi'yi'ge Windows Linux macOS Android cheng'xu"
     );
 }
